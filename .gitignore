@@ -1,0 +1,13 @@
+﻿.gradle/
+build/
+*.class
+*.jar
+*.war
+*.log
+.idea/
+*.iml
+out/
+run/
+crash-reports/
+logs/
+*.txt
