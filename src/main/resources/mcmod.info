@@ -1,0 +1,14 @@
+[{
+  "modid": "minerpartnertorch",
+  "name": "MinerPartner Torch",
+  "description": "Automatically places torches in dark areas while mining. Fixed spawning detection, supports yellow markers, customizable keybinding.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authors": ["GTNH Community"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}]

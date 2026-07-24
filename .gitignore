@@ -1,0 +1,14 @@
+.gradle/
+build/
+*.class
+*.war
+*.log
+.idea/
+*.iml
+out/
+run/
+crash-reports/
+logs/
+*.txt
+# 不忽略发布的 JAR（允许用户直接下载）
+!minerpartnertorch-*.jar

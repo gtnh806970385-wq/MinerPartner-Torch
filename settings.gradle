@@ -1,0 +1,14 @@
+pluginManagement {
+    repositories {
+        maven {
+            name = "GTNH Maven"
+            url = "https://repo.gtnewhorizons.net/releases/"
+        }
+        mavenLocal()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = "minerpartnertorch"
+
