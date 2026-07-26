@@ -19,6 +19,7 @@ import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.Vec3;
 import net.minecraft.world.EnumSkyBlock;
 import net.minecraft.world.World;
+import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Configuration;
 import org.lwjgl.input.Keyboard;
@@ -39,8 +40,10 @@ public class AutoTorchHandler {
     private boolean lastPlaceValid = false;
     private boolean coverYellowZones = true;
     private boolean avoidMultiblocks = true;
-    private boolean debugMode = true; // Show light level when placing torches
     private Configuration config;
+
+    // F3 debug info
+    private String f3DebugInfo = "";
 
     // Cached reflection check to avoid repeated class lookups
     private static boolean gtReflectionChecked = false;
@@ -101,12 +104,13 @@ public class AutoTorchHandler {
         if (bestPos == null) return;
         int x = bestPos[0], y = bestPos[1], z = bestPos[2];
         if (lastPlaceValid && lastPlaceX == x && lastPlaceY == y && lastPlaceZ == z) return;
-        if (debugMode) {
-            int bl = getBlockLight(world, x, y, z);
-            int el = getEffectiveLight(world, x, y, z);
-            String f7info = (el <= 7) ? "\u00a7c[F7\u7ea2\u53c9]\u00a7f" : ((bl <= 7) ? "\u00a7e[F7\u9ec4\u53c9]\u00a7f" : "\u00a7a[F7\u65e0\u53c9]\u00a7f");
-            player.addChatMessage(new ChatComponentText("\u00a7e[\u77ff\u5de5\u4f19\u4f34]\u00a7f \u63d2\u706b\u628a @(" + x + "," + y + "," + z + ") bl=" + bl + " el=" + el + " " + f7info));
-        }
+        // Store F3 debug info
+        int bl = getBlockLight(world, x, y, z);
+        int el = getEffectiveLight(world, x, y, z);
+        String xType = (el <= 7) ? "RED" : ((bl <= 7) ? "YEL" : "SAFE");
+        f3DebugInfo = String.format("%sMode [%s] Last(%d,%d,%d) BL=%d EL=%d F7=%s",
+            enabled ? "ON " : "OFF", coverYellowZones ? "R+Y" : "R  ",
+            x, y, z, bl, el, xType);
         placeTorch(mc, player, world, x, y, z);
         lastPlaceX = x; lastPlaceY = y; lastPlaceZ = z;
         lastPlaceValid = true;
@@ -273,5 +277,14 @@ public class AutoTorchHandler {
             if (updated != null && updated.stackSize <= 0) player.inventory.setInventorySlotContents(torchSlot, null);
         }
         player.inventory.currentItem = prevSlot;
+    }
+
+    @SubscribeEvent
+    public void onRenderOverlay(RenderGameOverlayEvent.Text event) {
+        if (f3DebugInfo.isEmpty()) return;
+        // Add to the right-side debug list (F3 screen)
+        event.right.add(null); // blank line
+        event.right.add("\u00a7e[MinerPartner Torch]\u00a7f");
+        event.right.add(f3DebugInfo);
     }
 }
