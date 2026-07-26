@@ -73,7 +73,8 @@ public class AutoTorchHandler {
             if (!keyDebounce) {
                 keyDebounce = true;
                 enabled = !enabled;
-                String msg = enabled ? "\u00a7e[\u77ff\u5de5\u4f19\u4f34]\u00a7f \u706b\u628a\u81ea\u52a8\u63d2\u5165\u5df2\u5f00\u542f" : "\u00a7e[\u77ff\u5de5\u4f19\u4f34]\u00a7f \u706b\u628a\u81ea\u52a8\u63d2\u5165\u5df2\u5173\u95ed";
+                String mode = coverYellowZones ? "\u00a7a[\u7ea2+\u9ec4\u53c9]\u00a7f" : "\u00a7c[\u4ec5\u7ea2\u53c9]\u00a7f";
+                String msg = enabled ? "\u00a7e[\u77ff\u5de5\u4f19\u4f34]\u00a7f \u706b\u628a\u81ea\u52a8\u63d2\u5165\u5df2\u5f00\u542f " + mode : "\u00a7e[\u77ff\u5de5\u4f19\u4f34]\u00a7f \u706b\u628a\u81ea\u52a8\u63d2\u5165\u5df2\u5173\u95ed";
                 mc.thePlayer.addChatMessage(new ChatComponentText(msg));
                 config.get(Configuration.CATEGORY_GENERAL, "enabled", true).set(enabled);
                 config.save();
