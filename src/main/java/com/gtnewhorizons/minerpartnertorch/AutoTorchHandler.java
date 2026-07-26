@@ -13,6 +13,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.inventory.IInventory;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.Vec3;
@@ -62,6 +63,11 @@ public class AutoTorchHandler {
             "When true, uses block light only (covers both red and yellow NEI F7 zones). When false, uses effective light (red zones only).");
         avoidMultiblocks = config.getBoolean("avoidMultiblocks", Configuration.CATEGORY_GENERAL, true,
             "When true, avoids placing torches inside GregTech multiblock machine interiors.");
+        // Force coverYellowZones to true to ensure yellow zones are always covered
+        if (!coverYellowZones) {
+            coverYellowZones = true;
+            config.get(Configuration.CATEGORY_GENERAL, "coverYellowZones", true).set(true);
+        }
         if (config.hasChanged()) config.save();
     }
     @SubscribeEvent
@@ -173,6 +179,16 @@ public class AutoTorchHandler {
         if (gtTileEntityInterface == null) return false;
         return gtTileEntityInterface.isAssignableFrom(te.getClass());
     }
+    /**
+     * Checks if the block at the given position is a container that would
+     * open a GUI on right-click (chest, furnace, machine, etc.).
+     */
+    private static boolean isContainerBlock(World world, int x, int y, int z) {
+        TileEntity te = world.getTileEntity(x, y, z);
+        if (te == null) return false;
+        return te instanceof IInventory;
+    }
+
     private int[] findDarkestPosition(World world, int px, int py, int pz) {
         List<int[]> candidates = new ArrayList<>();
         for (int dx = -scanRadius; dx <= scanRadius; dx++) {
@@ -188,6 +204,8 @@ public class AutoTorchHandler {
                     if (above == Blocks.torch) continue;
                     // Skip positions inside GregTech multiblock machine interiors
                     if (isInsideMultiblock(world, x, y, z)) continue;
+                    // Skip positions where the block below is a container (chest/machine)
+                    if (isContainerBlock(world, x, y - 1, z)) continue;
                     candidates.add(new int[]{x, y, z});
                 }
             }
