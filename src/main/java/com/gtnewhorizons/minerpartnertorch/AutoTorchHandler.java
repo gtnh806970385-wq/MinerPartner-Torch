@@ -102,35 +102,64 @@ public class AutoTorchHandler {
         int x = bestPos[0], y = bestPos[1], z = bestPos[2];
         if (lastPlaceValid && lastPlaceX == x && lastPlaceY == y && lastPlaceZ == z) return;
         if (debugMode) {
-            int bl = world.getBlockLightValue(x, y, z);
+            int bl = getBlockLight(world, x, y, z);
             int el = getEffectiveLight(world, x, y, z);
-            String type = (coverYellowZones ? "\u00a7e[\u65b9\u5757\u5149:" + bl + "]\u00a7f" : "\u00a7c[\u6709\u6548\u5149:" + el + "]\u00a7f");
-            player.addChatMessage(new ChatComponentText("\u00a7e[\u77ff\u5de5\u4f19\u4f34]\u00a7f \u63d2\u706b\u628a @(" + x + "," + y + "," + z + ") " + type));
+            String f7info = (el <= 7) ? "\u00a7c[F7\u7ea2\u53c9]\u00a7f" : ((bl <= 7) ? "\u00a7e[F7\u9ec4\u53c9]\u00a7f" : "\u00a7a[F7\u65e0\u53c9]\u00a7f");
+            player.addChatMessage(new ChatComponentText("\u00a7e[\u77ff\u5de5\u4f19\u4f34]\u00a7f \u63d2\u706b\u628a @(" + x + "," + y + "," + z + ") bl=" + bl + " el=" + el + " " + f7info));
         }
         placeTorch(mc, player, world, x, y, z);
         lastPlaceX = x; lastPlaceY = y; lastPlaceZ = z;
         lastPlaceValid = true;
         cooldownTimer = placeCooldown;
     }
+    /**
+     * Gets the effective light (same as NEI F7 red X calculation).
+     * Uses getSavedLightValue for direct chunk light array access.
+     */
     private int getEffectiveLight(World world, int x, int y, int z) {
-        int bl = world.getBlockLightValue(x, y, z);
-        int sl = world.getSkyBlockTypeBrightness(EnumSkyBlock.Sky, x, y, z);
+        int bl = world.getSavedLightValue(EnumSkyBlock.Block, x, y, z);
+        int sl = world.getSavedLightValue(EnumSkyBlock.Sky, x, y, z);
         int sub = world.calculateSkylightSubtracted(1.0F);
         return Math.max(bl, sl - sub);
     }
 
     /**
-     * Gets the light level used for dark-spot detection.
-     * When coverYellowZones is true, uses block light only (covers both red & yellow NEI F7 zones).
-     * When false, uses effective light (only red zones, original behavior).
+     * Returns the pure block light at a position (from chunk light array).
+     * This is the same value NEI F7 uses for block light.
      */
-    private int getDetectionLight(World world, int x, int y, int z) {
+    private int getBlockLight(World world, int x, int y, int z) {
+        return world.getSavedLightValue(EnumSkyBlock.Block, x, y, z);
+    }
+
+    /**
+     * Checks if NEI F7 would show a red X or yellow X at this position.
+     * 
+     * F7 algorithm:
+     *   effectiveLight = max(blockLight, skyLight - skylightSubtracted)
+     *   RED X:   effectiveLight <= 7
+     *   YELLOW X: effectiveLight > 7 && blockLight <= 7
+     *   NO X:    blockLight > 7 (fully safe, no mob spawns)
+     * 
+     * When coverYellowZones=true:  place torch if red OR yellow X shown (blockLight <= 7)
+     * When coverYellowZones=false: place torch only if red X shown (effectiveLight <= 7)
+     */
+    private boolean wouldF7ShowX(World world, int x, int y, int z) {
+        int blockLight = getBlockLight(world, x, y, z);
+        int effectiveLight = getEffectiveLight(world, x, y, z);
+
         if (coverYellowZones) {
-            // Block light only: covers yellow X (safe now, dangerous at night)
-            // AND red X (dangerous now). This ensures zero mob spawns at any time.
-            return world.getBlockLightValue(x, y, z);
+            // Place torch if F7 would show red X OR yellow X
+            // Mathematically: yellow X = (effectiveLight > 7 && blockLight <= 7)
+            // red X = (effectiveLight <= 7) which implies blockLight <= 7
+            // So combined: blockLight <= 7
+            // But we compute explicitly for correctness:
+            boolean redX = effectiveLight <= lightThreshold;
+            boolean yellowX = effectiveLight > lightThreshold && blockLight <= lightThreshold;
+            return redX || yellowX;
+        } else {
+            // Only red X: effectiveLight <= 7
+            return effectiveLight <= lightThreshold;
         }
-        return getEffectiveLight(world, x, y, z);
     }
 
     /**
@@ -202,7 +231,7 @@ public class AutoTorchHandler {
             for (int dy = -verticalRange; dy <= verticalRange; dy++) {
                 for (int dz = -scanRadius; dz <= scanRadius; dz++) {
                     int x = px + dx, y = py + dy, z = pz + dz;
-                    if (getDetectionLight(world, x, y, z) > lightThreshold) continue;
+                    if (!wouldF7ShowX(world, x, y, z)) continue;
                     Block below = world.getBlock(x, y - 1, z);
                     Block above = world.getBlock(x, y, z);
                     if (!below.isOpaqueCube()) continue;
