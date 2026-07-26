@@ -39,6 +39,7 @@ public class AutoTorchHandler {
     private boolean lastPlaceValid = false;
     private boolean coverYellowZones = true;
     private boolean avoidMultiblocks = true;
+    private boolean debugMode = true; // Show light level when placing torches
     private Configuration config;
 
     // Cached reflection check to avoid repeated class lookups
@@ -100,6 +101,12 @@ public class AutoTorchHandler {
         if (bestPos == null) return;
         int x = bestPos[0], y = bestPos[1], z = bestPos[2];
         if (lastPlaceValid && lastPlaceX == x && lastPlaceY == y && lastPlaceZ == z) return;
+        if (debugMode) {
+            int bl = world.getBlockLightValue(x, y, z);
+            int el = getEffectiveLight(world, x, y, z);
+            String type = (coverYellowZones ? "\u00a7e[\u65b9\u5757\u5149:" + bl + "]\u00a7f" : "\u00a7c[\u6709\u6548\u5149:" + el + "]\u00a7f");
+            player.addChatMessage(new ChatComponentText("\u00a7e[\u77ff\u5de5\u4f19\u4f34]\u00a7f \u63d2\u706b\u628a @(" + x + "," + y + "," + z + ") " + type));
+        }
         placeTorch(mc, player, world, x, y, z);
         lastPlaceX = x; lastPlaceY = y; lastPlaceZ = z;
         lastPlaceValid = true;
