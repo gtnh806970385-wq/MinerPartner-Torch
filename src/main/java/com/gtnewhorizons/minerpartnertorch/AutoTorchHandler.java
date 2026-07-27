@@ -22,7 +22,6 @@ import net.minecraft.world.World;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Configuration;
-import org.lwjgl.input.Keyboard;
 
 @SideOnly(Side.CLIENT)
 public class AutoTorchHandler {
@@ -79,7 +78,7 @@ public class AutoTorchHandler {
         if (event.phase != TickEvent.Phase.START) return;
         Minecraft mc = Minecraft.getMinecraft();
         if (mc.thePlayer == null || mc.theWorld == null) return;
-        if (Keyboard.isKeyDown(Keyboard.KEY_Y)) {
+        if (AutoTorchMod.toggleKey.isPressed()) {
             if (!keyDebounce) {
                 keyDebounce = true;
                 enabled = !enabled;
